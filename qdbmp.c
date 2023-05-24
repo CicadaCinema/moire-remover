@@ -1,3 +1,11 @@
+#pragma clang diagnostic push
+
+#pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Wextra"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wconversion"
+
+
 #include "qdbmp.h"
 #include <stdlib.h>
 #include <string.h>
@@ -795,4 +803,6 @@ int	WriteUSHORT( USHORT x, FILE* f )
 
 	return ( f && fwrite( little, 2, 1, f ) == 1 );
 }
+
+#pragma clang diagnostic pop
 

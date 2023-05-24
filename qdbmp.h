@@ -1,3 +1,11 @@
+#pragma clang diagnostic push
+
+#pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Wextra"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wconversion"
+
+
 #ifndef _BMP_H_
 #define _BMP_H_
 
@@ -131,3 +139,6 @@ const char*		BMP_GetErrorDescription		();
 	}																				\
 
 #endif
+
+#pragma clang diagnostic pop
+
