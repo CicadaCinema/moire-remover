@@ -10,9 +10,9 @@
 
 /* Creates a negative image of the input bitmap file */
 int main(int argc, char *argv[]) {
-  UCHAR r, g, b;
-  UINT width, height;
-  UINT x, y;
+  unsigned char r, g, b;
+  unsigned long int width, height;
+  unsigned long int x, y;
   BMP *bmp;
 
   /* Check arguments */
