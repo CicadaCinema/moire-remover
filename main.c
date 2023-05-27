@@ -25,9 +25,69 @@ unsigned char *do_something(unsigned char *pixel_array, size_t width,
   // TODO: ensure I am using `malloc` correctly after I learn about pointers
   unsigned char *pixel_array_output = malloc(sizeof(unsigned char[length]));
 
-  // placeholder logic, just a test
-  for (size_t i = 0; i < length / 2; ++i) {
-    pixel_array_output[i] = pixel_array[i] / 2;
+  // apply the definition of the fourier transform
+  double complex red_frequency_domain[width * height];
+  for (size_t u = 0; u < height; u++) {
+    for (size_t v = 0; v < width; v++) {
+      double complex pixel_in_frequency_domain = 0;
+
+      // compute the sum for this pixel
+      for (size_t m = 0; m < height; m++) {
+        for (size_t n = 0; n < width; n++) {
+          //                 row offset + col offset
+          pixel_in_frequency_domain +=
+              pixel_array[3 * m * width + 3 * n] *
+              cexp(-2 * M_PI * I *
+                   ((double)(u * m) / ((double)height) +
+                    (double)(v * n) / ((double)width)));
+        }
+      }
+
+      red_frequency_domain[u * width + v] = pixel_in_frequency_domain;
+    }
+  }
+
+  // INSERT LOGIC HERE!
+  // `red_frequency_domain` now contains the fourier transform of the first
+  // image to preview it, uncomment the following block
+  /*
+  for (size_t i = 0; i < width * height; i++) {
+    unsigned char preview_pixel =
+        (unsigned char)log(cabs(red_frequency_domain[i])) * 20;
+    pixel_array_output[3 * i] = preview_pixel;
+    pixel_array_output[3 * i + 1] = preview_pixel;
+    pixel_array_output[3 * i + 2] = preview_pixel;
+  }
+  */
+
+  // apply the definition of the inverse fourier transform
+  double red_from_fourier[width * height];
+  for (size_t m = 0; m < height; m++) {
+    for (size_t n = 0; n < width; n++) {
+      double pixel_from_fourier = 0;
+
+      // compute the sum for this pixel
+      for (size_t u = 0; u < height; u++) {
+        for (size_t v = 0; v < width; v++) {
+          //                                        row offset + col offset
+          pixel_from_fourier += red_frequency_domain[u * width + v] *
+                                cexp(2 * M_PI * I *
+                                     ((double)(u * m) / ((double)height) +
+                                      (double)(v * n) / ((double)width)));
+        }
+      }
+
+      red_from_fourier[m * width + n] =
+          pixel_from_fourier / (double)(height * width);
+    }
+  }
+
+  // `red_from_fourier` now contains the original red channel of the image
+  for (size_t i = 0; i < width * height; i++) {
+    unsigned char preview_pixel = (unsigned char)red_from_fourier[i];
+    pixel_array_output[3 * i] = preview_pixel;
+    pixel_array_output[3 * i + 1] = preview_pixel;
+    pixel_array_output[3 * i + 2] = preview_pixel;
   }
 
   return pixel_array_output;
