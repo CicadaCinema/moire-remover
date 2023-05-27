@@ -26,7 +26,7 @@ unsigned char *do_something(unsigned char *pixel_array, size_t width,
   unsigned char *pixel_array_output = malloc(sizeof(unsigned char[length]));
 
   // placeholder logic, just a test
-  for (size_t i = 0; i < length; ++i) {
+  for (size_t i = 0; i < length / 2; ++i) {
     pixel_array_output[i] = pixel_array[i] / 2;
   }
 
@@ -62,8 +62,8 @@ int main(int argc, char *argv[]) {
   unsigned long int pixel_array_index = 0;
 
   // read the input image into the pixel array
-  for (x = 0; x < width; ++x) {
-    for (y = 0; y < height; ++y) {
+  for (y = 0; y < height; ++y) {
+    for (x = 0; x < width; ++x) {
       // read the pixel's RGB values from the BMP image
       BMP_GetPixelRGB(bmp, x, y, &r, &g, &b);
 
@@ -81,8 +81,8 @@ int main(int argc, char *argv[]) {
 
   // write the output pixel array to an image
   pixel_array_index = 0;
-  for (x = 0; x < width; ++x) {
-    for (y = 0; y < height; ++y) {
+  for (y = 0; y < height; ++y) {
+    for (x = 0; x < width; ++x) {
       // read the pixel's RGB values from the output pixel array
       r = pixel_array_output[pixel_array_index];
       g = pixel_array_output[pixel_array_index + 1];
