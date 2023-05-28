@@ -13,11 +13,69 @@ and saves the result as another BMP image.
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+double complex *compute_fourier(unsigned char *pixel_array, size_t width,
+                                size_t height) {
+  // TODO: ensure I am using `malloc` correctly after I learn about pointers
+  double complex *frequency_domain =
+      malloc(sizeof(double complex[width * height]));
+
+  // apply the definition of the fourier transform
+  for (size_t u = 0; u < height; u++) {
+    for (size_t v = 0; v < width; v++) {
+      double complex pixel_in_frequency_domain = 0;
+
+      // compute the sum for this pixel
+      for (size_t m = 0; m < height; m++) {
+        for (size_t n = 0; n < width; n++) {
+          pixel_in_frequency_domain +=
+              pixel_array[m * width + n] *
+              cexp(-2 * M_PI * I *
+                   ((double)(u * m) / ((double)height) +
+                    (double)(v * n) / ((double)width)));
+        }
+      }
+
+      frequency_domain[u * width + v] = pixel_in_frequency_domain;
+    }
+  }
+
+  return frequency_domain;
+}
+
+unsigned char *compute_inverse_fourier(double complex *frequency_domain,
+                                       size_t width, size_t height) {
+  // TODO: ensure I am using `malloc` correctly after I learn about pointers
+  unsigned char *pixel_array = malloc(sizeof(unsigned char[width * height]));
+
+  // apply the definition of the inverse fourier transform
+  for (size_t m = 0; m < height; m++) {
+    for (size_t n = 0; n < width; n++) {
+      double pixel_from_fourier = 0;
+
+      // compute the sum for this pixel
+      for (size_t u = 0; u < height; u++) {
+        for (size_t v = 0; v < width; v++) {
+          pixel_from_fourier += frequency_domain[u * width + v] *
+                                cexp(2 * M_PI * I *
+                                     ((double)(u * m) / ((double)height) +
+                                      (double)(v * n) / ((double)width)));
+        }
+      }
+
+      pixel_array[m * width + n] =
+          (unsigned char)(pixel_from_fourier / (double)(height * width));
+    }
+  }
+
+  return pixel_array;
+}
 
 // This is where the real logic happens!
 // The rest of this file is purely boilerplate.
 // Later, Dart will execute this function directly.
-unsigned char *do_something(unsigned char *pixel_array, size_t width,
+unsigned char *do_something(unsigned char *input_array, size_t width,
                             size_t height) {
   // assume the input pixel array has this length
   size_t length = width * height * 3;
@@ -25,33 +83,24 @@ unsigned char *do_something(unsigned char *pixel_array, size_t width,
   // TODO: ensure I am using `malloc` correctly after I learn about pointers
   unsigned char *pixel_array_output = malloc(sizeof(unsigned char[length]));
 
-  double complex frequency_domain[3][width * height];
+  // the colour channels must be stored in separate arrays, for us to be able
+  // to compute the 2D fourier transform cleanly, from the definition
+  unsigned char pixel_array[3][width * height];
   for (size_t channel_index = 0; channel_index < 3; channel_index++) {
-
-    // apply the definition of the fourier transform
-    for (size_t u = 0; u < height; u++) {
-      for (size_t v = 0; v < width; v++) {
-        double complex pixel_in_frequency_domain = 0;
-
-        // compute the sum for this pixel
-        for (size_t m = 0; m < height; m++) {
-          for (size_t n = 0; n < width; n++) {
-            pixel_in_frequency_domain +=
-                pixel_array[3 * m * width + 3 * n + channel_index] *
-                cexp(-2 * M_PI * I *
-                     ((double)(u * m) / ((double)height) +
-                      (double)(v * n) / ((double)width)));
-          }
-        }
-
-        frequency_domain[channel_index][u * width + v] =
-            pixel_in_frequency_domain;
-      }
+    for (size_t i = 0; i < width * height; i++) {
+      pixel_array[channel_index][i] = input_array[i * 3 + channel_index];
     }
   }
 
-  // INSERT LOGIC HERE!
+  // compute the fourier transform, one channel at a time
+  double complex *frequency_domain[3];
+  for (size_t channel_index = 0; channel_index < 3; channel_index++) {
+    frequency_domain[channel_index] =
+        compute_fourier(pixel_array[channel_index], width, height);
+  }
   // `frequency_domain[k]` now contains the fourier transform of the k'th colour channel
+
+  // INSERT LOGIC HERE!
 
   // to preview, uncomment the following block
   /*
@@ -64,39 +113,21 @@ unsigned char *do_something(unsigned char *pixel_array, size_t width,
     pixel_array_output[3 * i + 1] = preview_pixel;
     pixel_array_output[3 * i + 2] = preview_pixel;
   }
+  return pixel_array_output;
    */
 
-  double from_fourier[3][width * height];
+  // compute the inverse fourier transform, one channel at a time
+  unsigned char *from_fourier[3];
   for (size_t channel_index = 0; channel_index < 3; channel_index++) {
-
-    // apply the definition of the inverse fourier transform
-    for (size_t m = 0; m < height; m++) {
-      for (size_t n = 0; n < width; n++) {
-        double pixel_from_fourier = 0;
-
-        // compute the sum for this pixel
-        for (size_t u = 0; u < height; u++) {
-          for (size_t v = 0; v < width; v++) {
-            pixel_from_fourier +=
-                frequency_domain[channel_index][u * width + v] *
-                cexp(2 * M_PI * I *
-                     ((double)(u * m) / ((double)height) +
-                      (double)(v * n) / ((double)width)));
-          }
-        }
-
-        from_fourier[channel_index][m * width + n] =
-            pixel_from_fourier / (double)(height * width);
-      }
-    }
+    from_fourier[channel_index] =
+        compute_inverse_fourier(frequency_domain[channel_index], width, height);
   }
-
   // `from_fourier` now contains the original image
 
   for (size_t i = 0; i < width * height; i++) {
-    pixel_array_output[3 * i] = (unsigned char)from_fourier[0][i];
-    pixel_array_output[3 * i + 1] = (unsigned char)from_fourier[1][i];
-    pixel_array_output[3 * i + 2] = (unsigned char)from_fourier[2][i];
+    pixel_array_output[3 * i] = from_fourier[0][i];
+    pixel_array_output[3 * i + 1] = from_fourier[1][i];
+    pixel_array_output[3 * i + 2] = from_fourier[2][i];
   }
 
   return pixel_array_output;
