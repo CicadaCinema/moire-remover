@@ -8,6 +8,9 @@ and saves the result as another BMP image.
 
 #include "qdbmp.h"
 
+#include <fftw3.h>
+
+#include <assert.h>
 #include <complex.h>
 #include <inttypes.h>
 #include <math.h>
@@ -15,120 +18,127 @@ and saves the result as another BMP image.
 #include <stdlib.h>
 #include <string.h>
 
-double complex *compute_fourier(unsigned char *pixel_array, size_t width,
-                                size_t height) {
-  // TODO: ensure I am using `malloc` correctly after I learn about pointers
-  double complex *frequency_domain =
-      malloc(sizeof(double complex[width * height]));
-
-  // apply the definition of the fourier transform
-  for (size_t u = 0; u < height; u++) {
-    for (size_t v = 0; v < width; v++) {
-      double complex pixel_in_frequency_domain = 0;
-
-      // compute the sum for this pixel
-      for (size_t m = 0; m < height; m++) {
-        for (size_t n = 0; n < width; n++) {
-          pixel_in_frequency_domain +=
-              pixel_array[m * width + n] *
-              cexp(-2 * M_PI * I *
-                   ((double)(u * m) / ((double)height) +
-                    (double)(v * n) / ((double)width)));
-        }
-      }
-
-      frequency_domain[u * width + v] = pixel_in_frequency_domain;
-    }
-  }
-
-  return frequency_domain;
-}
-
-unsigned char *compute_inverse_fourier(double complex *frequency_domain,
-                                       size_t width, size_t height) {
-  // TODO: ensure I am using `malloc` correctly after I learn about pointers
-  unsigned char *pixel_array = malloc(sizeof(unsigned char[width * height]));
-
-  // apply the definition of the inverse fourier transform
-  for (size_t m = 0; m < height; m++) {
-    for (size_t n = 0; n < width; n++) {
-      double pixel_from_fourier = 0;
-
-      // compute the sum for this pixel
-      for (size_t u = 0; u < height; u++) {
-        for (size_t v = 0; v < width; v++) {
-          pixel_from_fourier += frequency_domain[u * width + v] *
-                                cexp(2 * M_PI * I *
-                                     ((double)(u * m) / ((double)height) +
-                                      (double)(v * n) / ((double)width)));
-        }
-      }
-
-      pixel_array[m * width + n] =
-          (unsigned char)(pixel_from_fourier / (double)(height * width));
-    }
-  }
-
-  return pixel_array;
-}
-
 // This is where the real logic happens!
 // The rest of this file is purely boilerplate.
 // Later, Dart will execute this function directly.
 unsigned char *do_something(unsigned char *input_array, size_t width,
                             size_t height) {
-  // assume the input pixel array has this length
+  // assume each colour channel has length `clength` ("colour length"),
+  // and the entire input pixel array has length `length`.
+  // this means that the frequency domain representation of each colour channel
+  // will have length `flength` ("Fourier length")
+  // TODO: convince myself that width/2+1 == (width/2)+1
+  size_t clength = width * height;
   size_t length = width * height * 3;
+  size_t flength = height * (width / 2 + 1);
 
+  // we will later return this pointer
   // TODO: ensure I am using `malloc` correctly after I learn about pointers
   unsigned char *pixel_array_output = malloc(sizeof(unsigned char[length]));
 
-  // the colour channels must be stored in separate arrays, for us to be able
-  // to compute the 2D fourier transform cleanly, from the definition
-  unsigned char pixel_array[3][width * height];
-  for (size_t channel_index = 0; channel_index < 3; channel_index++) {
-    for (size_t i = 0; i < width * height; i++) {
-      pixel_array[channel_index][i] = input_array[i * 3 + channel_index];
-    }
-  }
+  // allocate memory for both the forward and backward Fourier passes:
+  // initial ~> fourier ~> final
+  double *initial = fftw_alloc_real(clength);
+  fftw_complex *fourier = fftw_alloc_complex(flength);
+  double *final = fftw_alloc_real(clength);
 
-  // compute the fourier transform, one channel at a time
-  double complex *frequency_domain[3];
+  // define plans for both the forward and backward passes
+  fftw_plan plan_forward = fftw_plan_dft_r2c_2d(
+      (int)height, (int)width, initial, fourier, FFTW_ESTIMATE);
+  fftw_plan plan_inverse = fftw_plan_dft_c2r_2d((int)height, (int)width,
+                                                fourier, final, FFTW_ESTIMATE);
+
+  // compute the fourier transform, one channel at a time,
+  // using the fftw-initialised arrays as temporary caches
+  // TODO: could use memcpy here, or another optimisation
+  double complex frequency_domain[3][flength];
   for (size_t channel_index = 0; channel_index < 3; channel_index++) {
-    frequency_domain[channel_index] =
-        compute_fourier(pixel_array[channel_index], width, height);
+    // copy input data into fftw array
+    for (size_t i = 0; i < clength; i++) {
+      initial[i] = input_array[i * 3 + channel_index];
+    }
+    // execute fft
+    fftw_execute(plan_forward);
+    // copy output data from fftw array
+    for (size_t i = 0; i < flength; i++) {
+      frequency_domain[channel_index][i] = fourier[i][0] + I * fourier[i][1];
+    }
   }
   // `frequency_domain[k]` now contains the fourier transform of the k'th colour channel
 
-  // INSERT LOGIC HERE!
+  // INSERT LOGIC HERE! MODIFY `frequency_domain`!
 
-  // to preview, uncomment the following block
+  // to preview, uncomment the following block.
+  // fftw produces a smaller complex array than the source data, so we must pad
+  // the preview output array with zeroes to ensure that its size is consistent
+  // with the dimensions of the standard image output
+  // TODO: carefully review this for off-by-one bugs
   /*
   size_t colour_channel_preview = 0;
-  for (size_t i = 0; i < width * height; i++) {
-    unsigned char preview_pixel =
-        (unsigned char)log(cabs(frequency_domain[colour_channel_preview][i])) *
-        20;
-    pixel_array_output[3 * i] = preview_pixel;
-    pixel_array_output[3 * i + 1] = preview_pixel;
-    pixel_array_output[3 * i + 2] = preview_pixel;
+  size_t i = 0; // indexes the source fourier array
+  size_t j = 0; // indexes the destination preview array
+  for (size_t y = 0; y < height; y++) {
+    // fill in the beginning of this row with data
+    for (size_t x = 0; x < width / 2 + 1; x++) {
+      // the logarithm and the constant factor of 20 result in a pleasing
+      // visualisation of the test image
+      unsigned char preview_pixel =
+          (unsigned char)log(
+              cabs(frequency_domain[colour_channel_preview][i])) *
+          20;
+      pixel_array_output[j] = preview_pixel;
+      pixel_array_output[j + 1] = preview_pixel;
+      pixel_array_output[j + 2] = preview_pixel;
+      i += 1;
+      j += 3;
+    }
+    // pad the rest with zeroes
+    for (size_t x = width / 2 + 1; x < width; x++) {
+      pixel_array_output[j] = 0;
+      pixel_array_output[j + 1] = 0;
+      pixel_array_output[j + 2] = 0;
+      j += 3;
+    }
+    assert(i == (y + 1) * (width / 2 + 1));
+    assert(j == (y + 1) * 3 * width);
   }
+  assert(i == flength);
+  assert(j == length);
   return pixel_array_output;
-   */
+  */
 
   // compute the inverse fourier transform, one channel at a time
-  unsigned char *from_fourier[3];
+  // using the fftw-initialised arrays as temporary caches
+  // TODO: could use memcpy here, or another optimisation
+  unsigned char from_fourier[3][clength];
   for (size_t channel_index = 0; channel_index < 3; channel_index++) {
-    from_fourier[channel_index] =
-        compute_inverse_fourier(frequency_domain[channel_index], width, height);
+    // copy input data into fftw array
+    for (size_t i = 0; i < flength; i++) {
+      fourier[i][0] = creal(frequency_domain[channel_index][i]);
+      fourier[i][1] = cimag(frequency_domain[channel_index][i]);
+    }
+    // execute inverse fft
+    fftw_execute(plan_inverse);
+    // copy output data from fftw array, normalising each value
+    for (size_t i = 0; i < clength; i++) {
+      from_fourier[channel_index][i] =
+          (unsigned char)(final[i] / (double)clength);
+    }
   }
-  // `from_fourier` now contains the original image
+  // `from_fourier` now contains the altered image
 
-  for (size_t i = 0; i < width * height; i++) {
+  // copy the result to the output array
+  for (size_t i = 0; i < clength; i++) {
     pixel_array_output[3 * i] = from_fourier[0][i];
     pixel_array_output[3 * i + 1] = from_fourier[1][i];
     pixel_array_output[3 * i + 2] = from_fourier[2][i];
   }
+
+  fftw_destroy_plan(plan_forward);
+  fftw_destroy_plan(plan_inverse);
+  fftw_free(initial);
+  fftw_free(fourier);
+  fftw_free(final);
 
   return pixel_array_output;
 }
