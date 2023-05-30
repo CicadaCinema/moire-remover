@@ -18,6 +18,23 @@ and saves the result as another BMP image.
 #include <stdlib.h>
 #include <string.h>
 
+// applies the filter to `fourier` in-place
+// TODO: implement a better filter
+void apply_ideal_notch_reject_filter(complex double *fourier, size_t fwidth,
+                                     size_t fheight, size_t target_x,
+                                     size_t target_y, double target_radius) {
+  for (size_t y = 0; y < fheight; y++) {
+    for (size_t x = 0; x < fwidth; x++) {
+      // TODO: implement a more elegant solution than casting everything to signed
+      double D = sqrt(pow((signed)target_x - (signed)x, 2) +
+                      pow((signed)target_y - (signed)y, 2));
+      if (D < target_radius) {
+        fourier[y * fwidth + x] = 0;
+      }
+    }
+  }
+}
+
 // This is where the real logic happens!
 // The rest of this file is purely boilerplate.
 // Later, Dart will execute this function directly.
@@ -67,6 +84,26 @@ unsigned char *do_something(unsigned char *input_array, size_t width,
   // `frequency_domain[k]` now contains the fourier transform of the k'th colour channel
 
   // INSERT LOGIC HERE! MODIFY `frequency_domain`!
+
+  // try out some filters
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  45, 135, 6);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  34, 32, 6);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  42, 75, 4);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  51, 15, 4);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  63, 35, 4);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  69, 74, 4);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  22, 123, 4);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  50, 116, 4);
+  apply_ideal_notch_reject_filter(frequency_domain[0], width / 2 + 1, height,
+                                  56, 153, 4);
 
   // to preview, uncomment the following block.
   // fftw produces a smaller complex array than the source data, so we must pad
