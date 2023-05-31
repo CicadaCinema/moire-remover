@@ -10,6 +10,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+void apply_filter(double *fourier, size_t fwidth, size_t fheight,
+                  size_t target_x, size_t target_y, double target_radius) {
+  for (size_t y = 0; y < fheight; y++) {
+    for (size_t x = 0; x < fwidth; x++) {
+      double D = sqrt(pow((signed)target_x - (signed)x, 2) +
+                      pow((signed)target_y - (signed)y, 2));
+      if (D < target_radius) {
+        fourier[2 * (y * fwidth + x)] = 0;
+        fourier[2 * (y * fwidth + x) + 1] = 0;
+      }
+    }
+  }
+}
+
 // assume each colour channel of the input array is of length width*height.
 // the output for each channel will represent height*(width/2+1) complex numbers.
 double *image2fourier(uint8_t *input_array, size_t width, size_t height) {
@@ -46,6 +60,7 @@ double *image2fourier(uint8_t *input_array, size_t width, size_t height) {
 
 int main() {
   unsigned char dummy[1];
-  image2fourier(dummy, 1, 1);
+  double *result = image2fourier(dummy, 1, 1);
+  apply_filter(result, 1, 1, 1, 1, 1);
   return 0;
 }

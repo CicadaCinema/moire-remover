@@ -19,6 +19,31 @@ class NativeLibrary {
           lookup)
       : _lookup = lookup;
 
+  void apply_filter(
+    ffi.Pointer<ffi.Double> fourier,
+    int fwidth,
+    int fheight,
+    int target_x,
+    int target_y,
+    double target_radius,
+  ) {
+    return _apply_filter(
+      fourier,
+      fwidth,
+      fheight,
+      target_x,
+      target_y,
+      target_radius,
+    );
+  }
+
+  late final _apply_filterPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Double>, ffi.Size, ffi.Size,
+              ffi.Size, ffi.Size, ffi.Double)>>('apply_filter');
+  late final _apply_filter = _apply_filterPtr.asFunction<
+      void Function(ffi.Pointer<ffi.Double>, int, int, int, int, double)>();
+
   ffi.Pointer<ffi.Double> image2fourier(
     ffi.Pointer<ffi.Uint8> input_array,
     int width,

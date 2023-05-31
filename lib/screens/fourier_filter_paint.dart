@@ -15,7 +15,10 @@ import 'package:image/image.dart' as image;
 
 NativeLibrary loadFourierLibrary() {
   final libraryPath = path.join(
-      Directory.current.path, 'fourier_library', 'libfourier_library.so');
+    Directory.current.path,
+    'fourier_library',
+    'libfourier_library.so',
+  );
   final dylib = DynamicLibrary.open(libraryPath);
   return NativeLibrary(dylib);
 }
@@ -40,8 +43,8 @@ Image produceVisualisationWidget({
     final realPart = fourierData.elementAt(2 * j).value;
     final imaginaryPart = fourierData.elementAt(2 * j + 1).value;
     final magnitude = sqrt(pow(realPart, 2) + pow(imaginaryPart, 2));
-    // For an acceptable range of values.
-    final previewMagntitude = log(magnitude).toInt() * 20;
+    // Take the logarithm for an acceptable range of values.
+    final previewMagntitude = magnitude == 0 ? 0 : log(magnitude).toInt() * 20;
 
     // The magnitudes are displayed in greyscale, and the opacity must be maximal.
     resultPixelValues.add(previewMagntitude);
@@ -86,6 +89,24 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
 
   late final Pointer<Double> frequencyDomain;
 
+  // Dimensions of the source image, for each channel.
+  late final int width;
+  late final int height;
+
+  // Dimensions of the frequency domain representation, for each channel.
+  late final int fwidth;
+  late final int fheight;
+
+  void updateFourierVisualisation() {
+    setState(() {
+      displayPreviewImage = produceVisualisationWidget(
+        fourierData: frequencyDomain,
+        fwidth: fwidth,
+        fheight: fheight,
+      );
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,9 +116,11 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
     final inputImageBytes = widget.inputImage.readAsBytesSync();
     final inputImage = image.decodeImage(inputImageBytes)!;
 
-    // These variables correspond to the `height` and `width` in the C code.
-    final width = inputImage.width;
-    final height = inputImage.height;
+    width = inputImage.width;
+    height = inputImage.height;
+
+    fwidth = (width / 2).floor() + 1;
+    fheight = height;
 
     // Allocate memory for the input array.
     final inputArrayPointer = calloc<Uint8>(3 * width * height);
@@ -117,11 +140,7 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
     // Execute a Fourier transform using the native library.
     frequencyDomain = library.image2fourier(inputArrayPointer, width, height);
 
-    displayPreviewImage = produceVisualisationWidget(
-      fourierData: frequencyDomain,
-      fwidth: (width / 2).floor() + 1,
-      fheight: height,
-    );
+    updateFourierVisualisation();
   }
 
   @override
@@ -135,7 +154,19 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text('You have chosen ${widget.inputImage.path}'),
-            ...(displayPreviewImage == null ? [] : [displayPreviewImage!])
+            ...(displayPreviewImage == null
+                ? []
+                : [
+                    displayPreviewImage!,
+                    ElevatedButton(
+                      onPressed: () {
+                        library.apply_filter(
+                            frequencyDomain, fwidth, fheight, 40, 70, 10);
+                        updateFourierVisualisation();
+                      },
+                      child: const Text('apply filter'),
+                    ),
+                  ])
           ],
         ),
       ),
