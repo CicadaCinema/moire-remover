@@ -13,12 +13,24 @@ dependencies:
   cupertino_icons: ^1.0.2
   image: ^4.0.17
   file_picker: ^5.3.2
+  path: ^1.8.3
+  ffi: ^2.0.2
+  raw_image_provider: ^0.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  ffigen: ^8.0.2
 
 flutter:
   uses-material-design: true
 
+ffigen:
+  output: 'lib/generated_bindings.dart'
+  headers:
+    entry-points:
+      - 'fourier_library/fourier_library.h'
+  compiler-opts:
+    # TODO: investigate why I had to specify this manually
+    - '-I/usr/lib64/clang/15.0.7/include/'
