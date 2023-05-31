@@ -13,6 +13,58 @@ import '../generated_bindings.dart';
 import 'package:path/path.dart' as path;
 import 'package:image/image.dart' as image;
 
+NativeLibrary loadFourierLibrary() {
+  final libraryPath = path.join(
+      Directory.current.path, 'fourier_library', 'libfourier_library.so');
+  final dylib = DynamicLibrary.open(libraryPath);
+  return NativeLibrary(dylib);
+}
+
+/// Given a pointer to the memory location where the frequency domain data is
+/// stored, and the dimensions of this data (*not the dimensions of the input
+/// image*), return an [Image] visualisation of the magnitudes of the complex
+/// values.
+///
+/// We typically take the logarithm of the magnitude and multiply it by a
+/// constant factor.
+Image produceVisualisationWidget({
+  required Pointer<Double> fourierData,
+  required int fwidth,
+  required int fheight,
+}) {
+  // Refer to the native library documentation to see how data is stored at
+  // offsets from `resultPointer`.
+  // TODO: add support for all the colour channels, not just the first one.
+  final resultPixelValues = <int>[];
+  for (var j = 0; j < fheight * fheight; j++) {
+    final realPart = fourierData.elementAt(2 * j).value;
+    final imaginaryPart = fourierData.elementAt(2 * j + 1).value;
+    final magnitude = sqrt(pow(realPart, 2) + pow(imaginaryPart, 2));
+    // For an acceptable range of values.
+    final previewMagntitude = log(magnitude).toInt() * 20;
+
+    // The magnitudes are displayed in greyscale, and the opacity must be maximal.
+    resultPixelValues.add(previewMagntitude);
+    resultPixelValues.add(previewMagntitude);
+    resultPixelValues.add(previewMagntitude);
+    resultPixelValues.add(255);
+  }
+
+  final resultImageBytes = Uint8List.fromList(resultPixelValues);
+
+  // Use https://github.com/yrom/flutter_raw_image_provider to display an
+  // image from raw bytes.
+  var raw = RawImageData(
+    resultImageBytes,
+    fwidth,
+    fheight,
+    pixelFormat: PixelFormat.rgba8888,
+  );
+
+  // Build Image widget.
+  return Image(image: RawImageProvider(raw));
+}
+
 class FilterPaintPage extends StatefulWidget {
   const FilterPaintPage({
     super.key,
@@ -32,12 +84,7 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
   /// The Fourier library.
   late final NativeLibrary library;
 
-  NativeLibrary loadFourierLibrary() {
-    final libraryPath = path.join(
-        Directory.current.path, 'fourier_library', 'libfourier_library.so');
-    final dylib = DynamicLibrary.open(libraryPath);
-    return NativeLibrary(dylib);
-  }
+  late final Pointer<Double> frequencyDomain;
 
   @override
   void initState() {
@@ -68,40 +115,13 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
     }
 
     // Execute a Fourier transform using the native library.
-    final resultPointer =
-        library.image2fourier(inputArrayPointer, width, height);
+    frequencyDomain = library.image2fourier(inputArrayPointer, width, height);
 
-    // Refer to the native library documentation to see how data is stored at
-    // offsets from `resultPointer`.
-    // TODO: add support for all the colour channels, not just the first one.
-    final resultPixelValues = <int>[];
-    for (var j = 0; j < height * ((width / 2).floor() + 1); j++) {
-      final realPart = resultPointer.elementAt(2 * j).value;
-      final imaginaryPart = resultPointer.elementAt(2 * j + 1).value;
-      final magnitude = sqrt(pow(realPart, 2) + pow(imaginaryPart, 2));
-      // For an acceptable range of values.
-      final previewMagntitude = log(magnitude).toInt() * 20;
-
-      // The magnitudes are displayed in greyscale, and the opacity must be maximal.
-      resultPixelValues.add(previewMagntitude);
-      resultPixelValues.add(previewMagntitude);
-      resultPixelValues.add(previewMagntitude);
-      resultPixelValues.add(255);
-    }
-
-    final resultImageBytes = Uint8List.fromList(resultPixelValues);
-
-    // Use https://github.com/yrom/flutter_raw_image_provider to display an
-    // image from raw bytes.
-    var raw = RawImageData(
-      resultImageBytes,
-      (width / 2).floor() + 1,
-      height,
-      pixelFormat: PixelFormat.rgba8888,
+    displayPreviewImage = produceVisualisationWidget(
+      fourierData: frequencyDomain,
+      fwidth: (width / 2).floor() + 1,
+      fheight: height,
     );
-
-    // Build Image widget.
-    displayPreviewImage = Image(image: RawImageProvider(raw));
   }
 
   @override
