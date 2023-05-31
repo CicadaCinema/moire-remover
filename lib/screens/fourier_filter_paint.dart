@@ -153,18 +153,24 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text('You have chosen ${widget.inputImage.path}'),
+            const Text('Add filters to remove bright spots'),
             ...(displayPreviewImage == null
                 ? []
                 : [
-                    displayPreviewImage!,
-                    ElevatedButton(
-                      onPressed: () {
+                    GestureDetector(
+                      // Apply a filter on tap.
+                      onTapUp: (tapDetails) {
                         library.apply_filter(
-                            frequencyDomain, fwidth, fheight, 40, 70, 10);
+                          frequencyDomain,
+                          fwidth,
+                          fheight,
+                          tapDetails.localPosition.dx.toInt(),
+                          tapDetails.localPosition.dy.toInt(),
+                          10,
+                        );
                         updateFourierVisualisation();
                       },
-                      child: const Text('apply filter'),
+                      child: displayPreviewImage!,
                     ),
                   ])
           ],
