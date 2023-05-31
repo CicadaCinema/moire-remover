@@ -32,18 +32,18 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
   /// The Fourier library.
   late final NativeLibrary library;
 
-  void loadFourierLibrary() {
+  NativeLibrary loadFourierLibrary() {
     final libraryPath = path.join(
         Directory.current.path, 'fourier_library', 'libfourier_library.so');
     final dylib = DynamicLibrary.open(libraryPath);
-    library = NativeLibrary(dylib);
+    return NativeLibrary(dylib);
   }
 
   @override
   void initState() {
     super.initState();
 
-    loadFourierLibrary();
+    library = loadFourierLibrary();
 
     final inputImageBytes = widget.inputImage.readAsBytesSync();
     final inputImage = image.decodeImage(inputImageBytes)!;
