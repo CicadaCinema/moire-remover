@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
 uint8_t *fourier2image(double *fourier_array, size_t width, size_t height) {
   size_t clength = width * height;
   size_t flength = height * (width / 2 + 1);
@@ -38,8 +41,11 @@ uint8_t *fourier2image(double *fourier_array, size_t width, size_t height) {
 
 void apply_filter(double *fourier, size_t fwidth, size_t fheight,
                   size_t target_x, size_t target_y, double target_radius) {
-  for (size_t y = 0; y < fheight; y++) {
-    for (size_t x = 0; x < fwidth; x++) {
+
+  for (size_t y = MAX(0, target_y - target_radius - 5);
+       y < MIN(fheight, target_y + target_radius + 5); y++) {
+    for (size_t x = MAX(0, target_x - target_radius - 5);
+         x < MIN(fwidth, target_x + target_radius + 5); x++) {
       double D = sqrt(pow((signed)target_x - (signed)x, 2) +
                       pow((signed)target_y - (signed)y, 2));
       if (D < target_radius) {
