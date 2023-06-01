@@ -216,14 +216,12 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
                                     frequencyDomain,
                                     fwidth,
                                     fheight,
-                                    ((tapDetails.localPosition.dx -
-                                                pillarboxSize) /
-                                            scale)
-                                        .toInt(),
-                                    ((tapDetails.localPosition.dy -
-                                                letterboxSize) /
-                                            scale)
-                                        .toInt(),
+                                    (tapDetails.localPosition.dx -
+                                            pillarboxSize) ~/
+                                        scale,
+                                    (tapDetails.localPosition.dy -
+                                            letterboxSize) ~/
+                                        scale,
                                     10,
                                   );
                                   updateFourierVisualisation();
