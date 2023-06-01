@@ -39,7 +39,7 @@ Image fourierToWidget({
   // offsets from `fourierData`.
   // TODO: add support for all the colour channels, not just the first one.
   final resultPixelValues = <int>[];
-  for (var j = 0; j < fheight * fheight; j++) {
+  for (var j = 0; j < fwidth * fheight; j++) {
     final realPart = fourierData.elementAt(2 * j).value;
     final imaginaryPart = fourierData.elementAt(2 * j + 1).value;
     final magnitude = sqrt(pow(realPart, 2) + pow(imaginaryPart, 2));
