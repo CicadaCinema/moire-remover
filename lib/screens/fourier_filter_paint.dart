@@ -153,24 +153,87 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('Add filters to remove bright spots'),
+            Container(
+              width: double.maxFinite,
+              height: 42,
+              color: Colors.black38,
+              child: const Row(
+                children: [
+                  Text('Add filters to remove bright spots'),
+                ],
+              ),
+            ),
             ...(displayPreviewImage == null
                 ? []
                 : [
-                    GestureDetector(
-                      // Apply a filter on tap.
-                      onTapUp: (tapDetails) {
-                        library.apply_filter(
-                          frequencyDomain,
-                          fwidth,
-                          fheight,
-                          tapDetails.localPosition.dx.toInt(),
-                          tapDetails.localPosition.dy.toInt(),
-                          10,
-                        );
-                        updateFourierVisualisation();
-                      },
-                      child: displayPreviewImage!,
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (myContext, constraints) {
+                          ////////////////////////////////////////////////////////////
+                          // No idea how these work! Found through experimentation. //
+                          ////////////////////////////////////////////////////////////
+
+                          var scale = 1.0;
+
+                          var pillarboxSize =
+                              (constraints.maxWidth - fwidth) / 2;
+                          var letterboxSize =
+                              (constraints.maxHeight - fheight) / 2;
+
+                          if (constraints.maxWidth < fwidth &&
+                              constraints.maxHeight < fheight) {
+                            // both dimensions are small, work out scale first
+                            scale = min(constraints.maxWidth / fwidth,
+                                constraints.maxHeight / fheight);
+                            pillarboxSize =
+                                (constraints.maxWidth - fwidth * scale) / 2;
+                            letterboxSize =
+                                (constraints.maxHeight - fheight * scale) / 2;
+                            pillarboxSize = max(pillarboxSize, 0);
+                            letterboxSize = max(letterboxSize, 0);
+                          } else if (constraints.maxWidth < fwidth) {
+                            pillarboxSize = 0;
+                            scale = constraints.maxWidth / fwidth;
+                            letterboxSize += (fheight - scale * fheight) / 2;
+                          } else if (constraints.maxHeight < fheight) {
+                            letterboxSize = 0;
+                            scale = constraints.maxHeight / fheight;
+                            pillarboxSize += (fwidth - scale * fwidth) / 2;
+                          }
+
+                          ////////////////////////////////////////////////////////////
+                          ////////////////////////////////////////////////////////////
+                          return SizedBox(
+                            width: constraints.maxWidth,
+                            height: constraints.maxHeight,
+                            child: InteractiveViewer(
+                              minScale: 1,
+                              maxScale: 8,
+                              child: GestureDetector(
+                                // Apply a filter on tap.
+                                onTapUp: (tapDetails) {
+                                  library.apply_filter(
+                                    frequencyDomain,
+                                    fwidth,
+                                    fheight,
+                                    ((tapDetails.localPosition.dx -
+                                                pillarboxSize) /
+                                            scale)
+                                        .toInt(),
+                                    ((tapDetails.localPosition.dy -
+                                                letterboxSize) /
+                                            scale)
+                                        .toInt(),
+                                    10,
+                                  );
+                                  updateFourierVisualisation();
+                                },
+                                child: displayPreviewImage!,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ])
           ],
