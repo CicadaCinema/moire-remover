@@ -23,51 +23,6 @@ NativeLibrary loadFourierLibrary() {
   return NativeLibrary(dylib);
 }
 
-/// Given a pointer to the memory location where the frequency domain data is
-/// stored, and the dimensions of this data (*not the dimensions of the input
-/// image*), return an [Image] visualisation of the magnitudes of the complex
-/// values.
-///
-/// We typically take the logarithm of the magnitude and multiply it by a
-/// constant factor.
-Image fourierToWidget({
-  required Pointer<Double> fourierData,
-  required int fwidth,
-  required int fheight,
-}) {
-  // Refer to the native library documentation to see how data is stored at
-  // offsets from `fourierData`.
-  // TODO: add support for all the colour channels, not just the first one.
-  final resultPixelValues = <int>[];
-  for (var j = 0; j < fwidth * fheight; j++) {
-    final realPart = fourierData.elementAt(2 * j).value;
-    final imaginaryPart = fourierData.elementAt(2 * j + 1).value;
-    final magnitude = sqrt(pow(realPart, 2) + pow(imaginaryPart, 2));
-    // Take the logarithm for an acceptable range of values.
-    final previewMagntitude = magnitude == 0 ? 0 : log(magnitude).toInt() * 20;
-
-    // The magnitudes are displayed in greyscale, and the opacity must be maximal.
-    resultPixelValues.add(previewMagntitude);
-    resultPixelValues.add(previewMagntitude);
-    resultPixelValues.add(previewMagntitude);
-    resultPixelValues.add(255);
-  }
-
-  final resultImageBytes = Uint8List.fromList(resultPixelValues);
-
-  // Use https://github.com/yrom/flutter_raw_image_provider to display an
-  // image from raw bytes.
-  final raw = RawImageData(
-    resultImageBytes,
-    fwidth,
-    fheight,
-    pixelFormat: PixelFormat.rgba8888,
-  );
-
-  // Build Image widget.
-  return Image(image: RawImageProvider(raw));
-}
-
 /// Given a pointer to the memory location where the pixel image data is
 /// stored, and the dimensions of each channel, return an [Image] widget which
 /// displays this image.
@@ -135,8 +90,42 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
   late final int fwidth;
   late final int fheight;
 
+  /// Given a pointer to the memory location where the frequency domain data is
+  /// stored, and the dimensions of this data (*not the dimensions of the input
+  /// image*), return an [Image] visualisation of the magnitudes of the complex
+  /// values.
+  ///
+  /// We typically take the logarithm of the magnitude and multiply it by a
+  /// constant factor.
+  Image fourierToWidget({
+    required Pointer<Double> fourierData,
+    required int fwidth,
+    required int fheight,
+  }) {
+    final previewPointer =
+        library.fourier2rgba_preview(fourierData, fwidth * fheight);
+
+    final preview = previewPointer.asTypedList(fwidth * fheight * 4);
+
+    // Use https://github.com/yrom/flutter_raw_image_provider to display an
+    // image from raw bytes.
+    final raw = RawImageData(
+      preview,
+      fwidth,
+      fheight,
+      pixelFormat: PixelFormat.rgba8888,
+    );
+
+    // TODO: am I freeing this pointer correctly?
+    malloc.free(previewPointer);
+
+    // Build Image widget.
+    return Image(image: RawImageProvider(raw));
+  }
+
   void updateFourierVisualisation() {
     setState(() {
+      // TODO: add support for previewing all the colour channels, not just the first one.
       displayPreviewImage = fourierToWidget(
         fourierData: frequencyDomain,
         fwidth: fwidth,

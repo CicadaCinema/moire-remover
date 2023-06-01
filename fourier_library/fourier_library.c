@@ -56,6 +56,25 @@ void apply_filter(double *fourier, size_t fwidth, size_t fheight,
   }
 }
 
+// expect `fourier_array` to represent `flength` complex numbers
+uint8_t *fourier2rgba_preview(double *fourier_array, size_t flength) {
+  uint8_t *preview_array = malloc(sizeof(uint8_t[flength * 4]));
+
+  for (size_t i = 0; i < flength; i++) {
+    double real_part = fourier_array[2 * i];
+    double imaginary_part = fourier_array[2 * i + 1];
+    double magnitude = sqrt(pow(real_part, 2) + pow(imaginary_part, 2));
+    double preview_magnitude = magnitude == 0 ? 0 : log(magnitude) * 20;
+
+    preview_array[4 * i] = preview_magnitude;
+    preview_array[4 * i + 1] = preview_magnitude;
+    preview_array[4 * i + 2] = preview_magnitude;
+    preview_array[4 * i + 3] = 255;
+  }
+
+  return preview_array;
+}
+
 // the arguments height and width are the dimensions of the original image
 // assume each colour channel of the input array is of length width*height.
 // the output for each channel will represent height*(width/2+1) complex numbers.

@@ -63,6 +63,23 @@ class NativeLibrary {
   late final _apply_filter = _apply_filterPtr.asFunction<
       void Function(ffi.Pointer<ffi.Double>, int, int, int, int, double)>();
 
+  ffi.Pointer<ffi.Uint8> fourier2rgba_preview(
+    ffi.Pointer<ffi.Double> fourier_array,
+    int flength,
+  ) {
+    return _fourier2rgba_preview(
+      fourier_array,
+      flength,
+    );
+  }
+
+  late final _fourier2rgba_previewPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Uint8> Function(
+              ffi.Pointer<ffi.Double>, ffi.Size)>>('fourier2rgba_preview');
+  late final _fourier2rgba_preview = _fourier2rgba_previewPtr.asFunction<
+      ffi.Pointer<ffi.Uint8> Function(ffi.Pointer<ffi.Double>, int)>();
+
   ffi.Pointer<ffi.Double> image2fourier(
     ffi.Pointer<ffi.Uint8> input_array,
     int width,
