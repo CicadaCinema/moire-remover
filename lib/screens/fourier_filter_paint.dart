@@ -57,7 +57,7 @@ Image fourierToWidget({
 
   // Use https://github.com/yrom/flutter_raw_image_provider to display an
   // image from raw bytes.
-  var raw = RawImageData(
+  final raw = RawImageData(
     resultImageBytes,
     fwidth,
     fheight,
@@ -95,7 +95,7 @@ Image arrayToWidget({
 
   // Use https://github.com/yrom/flutter_raw_image_provider to display an
   // image from raw bytes.
-  var raw = RawImageData(
+  final raw = RawImageData(
     imageBytes,
     width,
     height,
