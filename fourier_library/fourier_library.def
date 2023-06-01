@@ -2,3 +2,4 @@ LIBRARY   fourier_library
 EXPORTS
    image2fourier
    apply_filter
+   fourier2image

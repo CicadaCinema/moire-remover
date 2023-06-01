@@ -6,12 +6,12 @@ import 'dart:ui';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as image;
+import 'package:path/path.dart' as path;
 import 'package:raw_image_provider/raw_image_provider.dart';
 
 import '../generated_bindings.dart';
-
-import 'package:path/path.dart' as path;
-import 'package:image/image.dart' as image;
+import 'output_image_view.dart';
 
 NativeLibrary loadFourierLibrary() {
   final libraryPath = path.join(
@@ -30,13 +30,13 @@ NativeLibrary loadFourierLibrary() {
 ///
 /// We typically take the logarithm of the magnitude and multiply it by a
 /// constant factor.
-Image produceVisualisationWidget({
+Image fourierToWidget({
   required Pointer<Double> fourierData,
   required int fwidth,
   required int fheight,
 }) {
   // Refer to the native library documentation to see how data is stored at
-  // offsets from `resultPointer`.
+  // offsets from `fourierData`.
   // TODO: add support for all the colour channels, not just the first one.
   final resultPixelValues = <int>[];
   for (var j = 0; j < fheight * fheight; j++) {
@@ -61,6 +61,44 @@ Image produceVisualisationWidget({
     resultImageBytes,
     fwidth,
     fheight,
+    pixelFormat: PixelFormat.rgba8888,
+  );
+
+  // Build Image widget.
+  return Image(image: RawImageProvider(raw));
+}
+
+/// Given a pointer to the memory location where the pixel image data is
+/// stored, and the dimensions of each channel, return an [Image] widget which
+/// displays this image.
+Image arrayToWidget({
+  required Pointer<Uint8> pixelArray,
+  required int width,
+  required int height,
+}) {
+  // Refer to the native library documentation to see how data is stored at
+  // offsets from `pixelArray`.
+  final pixelValues = <int>[];
+  for (var j = 0; j < width * height; j++) {
+    final r = pixelArray.elementAt(3 * j).value;
+    final g = pixelArray.elementAt(3 * j + 1).value;
+    final b = pixelArray.elementAt(3 * j + 2).value;
+
+    // TODO: show all the colour channels, not just the first one.
+    pixelValues.add(r);
+    pixelValues.add(r);
+    pixelValues.add(r);
+    pixelValues.add(255);
+  }
+
+  final imageBytes = Uint8List.fromList(pixelValues);
+
+  // Use https://github.com/yrom/flutter_raw_image_provider to display an
+  // image from raw bytes.
+  var raw = RawImageData(
+    imageBytes,
+    width,
+    height,
     pixelFormat: PixelFormat.rgba8888,
   );
 
@@ -99,7 +137,7 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
 
   void updateFourierVisualisation() {
     setState(() {
-      displayPreviewImage = produceVisualisationWidget(
+      displayPreviewImage = fourierToWidget(
         fourierData: frequencyDomain,
         fwidth: fwidth,
         fheight: fheight,
@@ -157,9 +195,28 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
               width: double.maxFinite,
               height: 42,
               color: Colors.black38,
-              child: const Row(
+              child: Row(
                 children: [
-                  Text('Add filters to remove bright spots'),
+                  const Text('Add filters to remove bright spots'),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => OutputImageViewPage(
+                              outputImage: arrayToWidget(
+                            pixelArray: library.fourier2image(
+                              frequencyDomain,
+                              width,
+                              height,
+                            ),
+                            width: width,
+                            height: height,
+                          )),
+                        ),
+                      );
+                    },
+                    child: const Text('proceed'),
+                  )
                 ],
               ),
             ),
