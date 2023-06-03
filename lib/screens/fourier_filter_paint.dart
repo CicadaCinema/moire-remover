@@ -84,6 +84,11 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
     // Execute a Fourier transform using the native library.
     frequencyDomain = library.image2fourier(inputArrayPointer, width, height);
 
+    // Free the memory associated with the input image - from now on we will
+    // only work with the frequency domain representation.
+    // TODO: am I freeing memory correctly?
+    calloc.free(inputArrayPointer);
+
     updateFourierVisualisation();
   }
 
