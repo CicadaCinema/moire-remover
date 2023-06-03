@@ -111,10 +111,8 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Container(
-              width: double.maxFinite,
-              height: 42,
-              color: Colors.black38,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
                   const Text('Add filters to remove bright spots'),
