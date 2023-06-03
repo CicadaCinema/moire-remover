@@ -39,6 +39,9 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
   late final int fwidth;
   late final int fheight;
 
+  // State for text field. Supply the initial value.
+  final textFieldController = TextEditingController(text: '10');
+
   void updateFourierVisualisation() {
     setState(() {
       // TODO: add support for previewing all the colour channels, not just the first one.
@@ -49,6 +52,12 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
         fheight: fheight,
       );
     });
+  }
+
+  @override
+  void dispose() {
+    textFieldController.dispose();
+    super.dispose();
   }
 
   @override
@@ -109,6 +118,15 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
               child: Row(
                 children: [
                   const Text('Add filters to remove bright spots'),
+                  Expanded(
+                    child: TextField(
+                      keyboardType: const TextInputType.numberWithOptions(
+                        signed: false,
+                        decimal: true,
+                      ),
+                      controller: textFieldController,
+                    ),
+                  ),
                   ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).push(
@@ -190,7 +208,8 @@ class _FilterPaintPageState extends State<FilterPaintPage> {
                                     (tapDetails.localPosition.dy -
                                             letterboxSize) ~/
                                         scale,
-                                    10,
+                                    // TODO: this needs  validation
+                                    double.parse(textFieldController.text),
                                   );
                                   updateFourierVisualisation();
                                 },
