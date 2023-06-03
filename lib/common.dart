@@ -85,9 +85,6 @@ Image fourierToWidget({
     pixelFormat: PixelFormat.rgba8888,
   );
 
-  // TODO: am I freeing this pointer correctly?
-  malloc.free(previewPointer);
-
   // Build Image widget.
   return Image(image: RawImageProvider(raw));
 }
