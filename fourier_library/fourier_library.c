@@ -36,6 +36,10 @@ uint8_t *fourier2image(double *fourier_array, size_t width, size_t height) {
     }
   }
 
+  fftw_destroy_plan(plan_inverse);
+  fftw_free(fourier);
+  fftw_free(final);
+
   return pixel_array_output;
 }
 
@@ -100,6 +104,10 @@ double *image2fourier(uint8_t *input_array, size_t width, size_t height) {
       frequency_domain[2 * (channel_index * flength + i) + 1] = fourier[i][1];
     }
   }
+
+  fftw_destroy_plan(plan_forward);
+  fftw_free(initial);
+  fftw_free(fourier);
 
   // `frequency_domain` now contains the Fourier transforms of the three colour
   // channels, stored sequentially one after another:
