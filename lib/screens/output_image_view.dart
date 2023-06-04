@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/interactive_image.dart';
+
 class OutputImageViewPage extends StatefulWidget {
   const OutputImageViewPage({
     super.key,
@@ -22,7 +24,7 @@ class _OutputImageViewPageState extends State<OutputImageViewPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            widget.outputImage,
+            InteractiveImage(child: widget.outputImage),
           ],
         ),
       ),

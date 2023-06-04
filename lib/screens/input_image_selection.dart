@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/interactive_image.dart';
 import 'fourier_filter_paint.dart';
 
 class InputImageSelectionPage extends StatefulWidget {
@@ -43,7 +44,7 @@ class _InputImageSelectionPageState extends State<InputImageSelectionPage> {
             ...(imageChosen == null
                 ? [const Text('No image selected')]
                 : [
-                    Image.file(imageChosen!),
+                    InteractiveImage(child: Image.file(imageChosen!)),
                     ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).push(
