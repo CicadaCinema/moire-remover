@@ -32,7 +32,13 @@ uint8_t *fourier2image(double *fourier_array, size_t width, size_t height) {
     }
     fftw_execute(plan_inverse);
     for (size_t i = 0; i < clength; i++) {
-      pixel_array_output[i * 3 + channel_index] = final[i] / (width * height);
+      double result = final[i] / (width * height);
+      if (result > 255) {
+        result = 255;
+      } else if (result < 0) {
+        result = 0;
+      }
+      pixel_array_output[i * 3 + channel_index] = result;
     }
   }
 
