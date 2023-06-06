@@ -16,3 +16,7 @@ In the below descriptions, the word *logical* means "referring to the image dime
 - `fwidth` and `fheight` are equal to `(width / 2).floor() + 1` and `height` respectively and represent the dimensions of the complex-valued matrix (whose magnitudes and arguments can be viewed as an image visualisation, each with dimensions `fwidth` and `fheight`) given by the output of the 2D Fourier transform of a single colour channel of the input image.
 - `flength` is equal to `fwidth * fheight` and represents the number of entries in the matrix described above.
 
+## Build instructions
+
+`cd fourier_library && cmake . && make all && cd .. && dart run ffigen && flutter run`
+
