@@ -158,8 +158,13 @@ unsigned char *do_something(unsigned char *input_array, size_t width,
     fftw_execute(plan_inverse);
     // copy output data from fftw array, normalising each value
     for (size_t i = 0; i < clength; i++) {
-      from_fourier[channel_index][i] =
-          (unsigned char)(final[i] / (double)clength);
+      double result = final[i] / (double)clength;
+      if (result > 255) {
+        result = 255;
+      } else if (result < 0) {
+        result = 0;
+      }
+      from_fourier[channel_index][i] = (unsigned char)result;
     }
   }
   // `from_fourier` now contains the altered image
