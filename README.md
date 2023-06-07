@@ -22,26 +22,25 @@ In the below descriptions, the word *logical* means "referring to the image dime
 
 ## Inspiration
 
-https://news.ycombinator.com/item?id=28663719
-https://newsletter.shifthappens.site/archive/moire-no-more/
+- https://news.ycombinator.com/item?id=28663719
+- https://newsletter.shifthappens.site/archive/moire-no-more/
 
 ## Existing implementations of this idea
 
-https://docs.opencv.org/3.4.15/d2/d0b/tutorial_periodic_noise_removing_filter.html
-http://www.descreen.net/eng/help/descreen/home/descreen_manual.htm
-https://clouard.users.greyc.fr/Pantheon/experiments/scanner-restoration/index-en.html
+- https://docs.opencv.org/3.4.15/d2/d0b/tutorial_periodic_noise_removing_filter.html
+- http://www.descreen.net/eng/help/descreen/home/descreen_manual.htm
+- https://clouard.users.greyc.fr/Pantheon/experiments/scanner-restoration/index-en.html
 
 ## General resources
 
-https://vincmazet.github.io/bip/filtering/fourier.html
-https://eecs.wsu.edu/~cs445/Lecture_11.pdf
-http://engr.case.edu/merat_francis/eecs490f07/lectures/lecture15.pdf
-https://www.google.com/search?q=gaussian+notch+filter&tbm=isch
-https://github.com/imdeep2905/Notch-Filter-for-Image-Processing/blob/master/filters/notch_filters.py
-http://ijournals.in/wp-content/uploads/2017/07/5.3106-Khanjan.compressed.pdf
-https://arxiv.org/pdf/1701.09037.pdf
-https://eej.aut.ac.ir/article_94_befd8a642325852c3a0d41ece10b3feb.pdf
-https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-ipr.2018.5707
-https://www.scantips.com/basics06.html
-https://www.scantips.com/basics6b.html
-
+- https://vincmazet.github.io/bip/filtering/fourier.html
+- https://eecs.wsu.edu/~cs445/Lecture_11.pdf
+- http://engr.case.edu/merat_francis/eecs490f07/lectures/lecture15.pdf
+- https://www.google.com/search?q=gaussian+notch+filter&tbm=isch
+- https://github.com/imdeep2905/Notch-Filter-for-Image-Processing/blob/master/filters/notch_filters.py
+- http://ijournals.in/wp-content/uploads/2017/07/5.3106-Khanjan.compressed.pdf
+- https://arxiv.org/pdf/1701.09037.pdf
+- https://eej.aut.ac.ir/article_94_befd8a642325852c3a0d41ece10b3feb.pdf
+- https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-ipr.2018.5707
+- https://www.scantips.com/basics06.html
+- https://www.scantips.com/basics6b.html
